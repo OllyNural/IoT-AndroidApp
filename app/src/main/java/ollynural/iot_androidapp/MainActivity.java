@@ -21,7 +21,9 @@ public class MainActivity extends AppCompatActivity {
     // Array list so you can add as many iBeacons as you want. This future proofs the app.
     private static final List<String> MAC_ADDRESS = new ArrayList<>(Collections.singletonList("C5:04:72:47:93:60"));
     // To prevent false positives I use a boolean
-    private Boolean repeatCheckBoolean = false;
+    private boolean repeatCheckBoolean = false;
+    private boolean hasSentInRangeMessage = false;
+    private boolean hasSentOutRangeMessage = false;
 
     // MQTT Client for sending MQTT Messages
     MqttClient mqttClient = new MqttClient();
@@ -59,7 +61,13 @@ public class MainActivity extends AppCompatActivity {
                     // Has come in range twice now, so should be correct
                     if (repeatCheckBoolean) {
                         System.out.println("IN RANGE RSSI: " + result.getRssi());
-                        mqttClient.sendMessage(android_id, result.getDevice().getAddress(), true);
+                        // Check if a message has already been sent for in range
+                        if (!hasSentInRangeMessage) {
+                            mqttClient.sendMessage(android_id, result.getDevice().getAddress(), true);
+                            // Set sent in range to true and reset out of range
+                            hasSentInRangeMessage = true;
+//                            hasSentOutRangeMessage = false;
+                        }
                     }
                     // Check if just a false positive, as was just out of range
                     else {
@@ -70,7 +78,13 @@ public class MainActivity extends AppCompatActivity {
                     // Has left range twice now, so should be correct
                     if (!repeatCheckBoolean) {
                         System.out.println("OUT OF RANGE RSSI: " + result.getRssi());
-                        mqttClient.sendMessage(android_id, result.getDevice().getAddress(), false);
+                        // Check if a message has already beenb sent for out of range
+                        if (!hasSentOutRangeMessage) {
+                            mqttClient.sendMessage(android_id, result.getDevice().getAddress(), false);
+                            // Set out of range to true and reset in range
+                            hasSentOutRangeMessage = true;
+//                            hasSentInRangeMessage = false;
+                        }
                     }
                     // Check if just a false positive, as was just in range
                     else {
