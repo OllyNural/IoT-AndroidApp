@@ -78,11 +78,18 @@ public class MainActivity extends AppCompatActivity {
             // If the BLE Device's MAC Address is in our list of our iBeacons
             if (MAC_ADDRESS.contains(result.getDevice().getAddress())) {
                 System.out.println("Found iBeacon!");
+
+                // @TODO WHAT HAPPENS IF IT CAN'T BE PICKED UP
+
+                // -60 is boundary cut-off for in and out of range
                 if (result.getRssi() > -60) {
+                    // ~~~ IN RANGE ~~~
+
                     // Check if false positive or if it has been  'in range' twice now
                     if (repeatCheckBoolean) {
                         // Has come in range twice now, so should be correct
                         System.out.println("IN RANGE RSSI: " + result.getRssi());
+
                         // Check if a message has already been sent for in range since being in range
                         if (!hasSentInRangeMessage) {
                             mqttClient.sendMessage(android_id, result.getDevice().getAddress(), true);
@@ -90,16 +97,20 @@ public class MainActivity extends AppCompatActivity {
                             hasSentInRangeMessage = true;
                             hasSentOutRangeMessage = false;
                         }
+
                     }
                     // Check if it is a false 'in range' positive, as was just out of range
                     else {
                         repeatCheckBoolean = true;
                     }
                 } else {
+                    // ~~~ OUT OF RANGE ~~~
+
                     // Check if false positive or if it has been  'out of range' twice now
                     if (!repeatCheckBoolean) {
                         // Has been out of range twice now, so should be correct
                         System.out.println("OUT OF RANGE RSSI: " + result.getRssi());
+
                         // Check if a message has already been sent for out of range since being out of range
                         if (!hasSentOutRangeMessage) {
                             mqttClient.sendMessage(android_id, result.getDevice().getAddress(), false);
@@ -107,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
                             hasSentOutRangeMessage = true;
                             hasSentInRangeMessage = false;
                         }
+
                     }
                     // Check if it is a false 'out of range' positive, as was just in range
                     else {
@@ -117,5 +129,4 @@ public class MainActivity extends AppCompatActivity {
             super.onScanResult(callbackType, result);
         }
     };
-
 }
