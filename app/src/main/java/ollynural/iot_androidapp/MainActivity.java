@@ -15,9 +15,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     private BluetoothLeScanner bluetoothLeScanner;
-//
-//    // Stops scanning after 10 seconds
-//    private static final long SCAN_PERIOD = 10000;
+
     // Array list so you can add as many iBeacons as you want. This future proofs the app.
     private static final List<String> MAC_ADDRESS = new ArrayList<>(Collections.singletonList("C5:04:72:47:93:60"));
     // To prevent false positives I use a boolean
@@ -37,6 +35,8 @@ public class MainActivity extends AppCompatActivity {
         System.out.println("Creating APP");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        // Set up the connection to the server
+        mqttClient.setUpConnection();
         // Set the Unique Android ID
         android_id = Secure.getString(MainActivity.this.getContentResolver(), Secure.ANDROID_ID);
         // Set up Bluetooth Adapter and Scanner
@@ -57,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
             // If the BLE Device's MAC Address is in our list of our iBeacons
             if (MAC_ADDRESS.contains(result.getDevice().getAddress())) {
                 System.out.println("Found iBeacon!");
-                if (result.getRssi() > -65) {
+                if (result.getRssi() > -60) {
                     // Has come in range twice now, so should be correct
                     if (repeatCheckBoolean) {
                         System.out.println("IN RANGE RSSI: " + result.getRssi());
@@ -66,7 +66,6 @@ public class MainActivity extends AppCompatActivity {
                             mqttClient.sendMessage(android_id, result.getDevice().getAddress(), true);
                             // Set sent in range to true and reset out of range
                             hasSentInRangeMessage = true;
-//                            hasSentOutRangeMessage = false;
                         }
                     }
                     // Check if just a false positive, as was just out of range
@@ -78,12 +77,11 @@ public class MainActivity extends AppCompatActivity {
                     // Has left range twice now, so should be correct
                     if (!repeatCheckBoolean) {
                         System.out.println("OUT OF RANGE RSSI: " + result.getRssi());
-                        // Check if a message has already beenb sent for out of range
+                        // Check if a message has already been sent for out of range
                         if (!hasSentOutRangeMessage) {
                             mqttClient.sendMessage(android_id, result.getDevice().getAddress(), false);
                             // Set out of range to true and reset in range
                             hasSentOutRangeMessage = true;
-//                            hasSentInRangeMessage = false;
                         }
                     }
                     // Check if just a false positive, as was just in range
